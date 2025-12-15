@@ -6,8 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using OpenQA.Selenium.DevTools.V138.Network;
-using DevToolsSessionDomains = OpenQA.Selenium.DevTools.V138.DevToolsSessionDomains;
+using OpenQA.Selenium.DevTools.V143.Network;
+using DevToolsSessionDomains = OpenQA.Selenium.DevTools.V143.DevToolsSessionDomains;
 using DWLibary;
 using OpenQA.Selenium;
 using OpenQA.Selenium.DevTools;
@@ -44,7 +44,7 @@ namespace DWLibary
             
             service = OpenQA.Selenium.Edge.EdgeDriverService.CreateDefaultService(Path.Combine(GlobalVar.curExecutingDirectory(), "Drivers"), @"msedgedriver.exe");
             //disable console logging 
-            service.UseVerboseLogging = false;
+            //service.UseVerboseLogging = false;
             service.EnableVerboseLogging = false;
             service.Start();
         }
