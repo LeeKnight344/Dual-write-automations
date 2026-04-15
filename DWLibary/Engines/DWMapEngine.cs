@@ -17,7 +17,7 @@ namespace DWLibary.Engines
 {
     public class DWMapEngine
     {
-        MapConfigs mapConfigs;
+        List<MapConfig> mapConfigs;
         DWEnvironment env;
         List<DWMap> dwMaps;
         DWMap currentMap;
@@ -81,7 +81,7 @@ namespace DWLibary.Engines
         {
             try
             {
-                mapConfigs = GlobalVar.dwSettings.MapConfigs;
+                mapConfigs = GlobalVar.dwSettings.MapConfigs.Cast<MapConfig>().ToList();
                 dwMaps = await common.getDWMaps();
 
                 await processMaps();

@@ -366,3 +366,6 @@ FodyWeavers.xsd
 /DualWriteHelper/DEBUGArgs.txt
 /DualWriteHelper/DEMO.config
 /DualWriteHelper/TEST.config
+
+# Release zip
+DWHelper.zip
