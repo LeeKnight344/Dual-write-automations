@@ -6,8 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using OpenQA.Selenium.DevTools.V145.Network;
-using DevToolsSessionDomains = OpenQA.Selenium.DevTools.V145.DevToolsSessionDomains;
+using OpenQA.Selenium.DevTools.V147.Network;
+using DevToolsSessionDomains = OpenQA.Selenium.DevTools.V147.DevToolsSessionDomains;
 using DWLibary;
 using OpenQA.Selenium;
 using OpenQA.Selenium.DevTools;
@@ -114,7 +114,8 @@ namespace DWLibary
                 driver = new EdgeDriver(service, options);
                
                 
-                session = ((IDevTools)driver).GetDevToolsSession();
+                // Pin DevTools protocol to V147 to match the bundled CDP bindings (avoids version-negotiation surprises with newer Edge builds).
+                session = ((IDevTools)driver).GetDevToolsSession(new DevToolsOptions { ProtocolVersion = 147 });
                 
                 initNetworkAdapter();
 
@@ -325,22 +326,38 @@ namespace DWLibary
 
             NetworkAdapter adapter = sender as NetworkAdapter;
 
-            if (e.Type == ResourceType.Fetch && e.Response.Url == "https://login.microsoftonline.com/common/oauth2/v2.0/token")
+            // Diagnostic - logs every CDP response so we can confirm events fire and see actual URLs.
+            try { logger?.LogDebug($"[CDP] {e.Type} {e.Response?.Status} {e.Response?.Url}"); } catch { }
+
+            if (e.Response == null || string.IsNullOrEmpty(e.Response.Url))
+                return;
+
+            // Match any tenant-specific or common Entra token endpoint on either login.microsoftonline.com or login.microsoft.com.
+            // Don't filter on ResourceType - it shifts between CDP versions (Fetch / Xhr / Other).
+            if (e.Response.Url.Contains("/oauth2/v2.0/token", StringComparison.OrdinalIgnoreCase)
+                && (e.Response.Url.Contains("login.microsoftonline.com", StringComparison.OrdinalIgnoreCase)
+                    || e.Response.Url.Contains("login.microsoft.com", StringComparison.OrdinalIgnoreCase)))
             {
-                string whatever = String.Empty;
-                //Network mw = new Network();
-                //var test = netWork.get
+                try
+                {
+                    logger?.LogInformation($"[CDP] Matched token endpoint: {e.Response.Url}");
+                    var response = await adapter.Session.GetVersionSpecificDomains<DevToolsSessionDomains>()
+                        .Network.GetResponseBody(new GetResponseBodyCommandSettings() { RequestId = e.RequestId });
 
-                var response = await adapter.Session.GetVersionSpecificDomains<DevToolsSessionDomains>().Network.GetResponseBody(new GetResponseBodyCommandSettings() { RequestId = e.RequestId });
-
-                processNetworkTokenResponse(response.Body);
+                    processNetworkTokenResponse(response.Body);
+                    logger?.LogInformation("[CDP] Token response body processed.");
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogWarning($"Failed to read token response body: {ex.Message}");
+                }
             }
 
-            if (e.Type == ResourceType.Fetch && e.Response.Url.Contains("Version") && e.Response.Url.Contains("projectmanagementservice"))
+            if (e.Response.Url.Contains("projectmanagementservice", StringComparison.OrdinalIgnoreCase)
+                && e.Response.Url.Contains("Version", StringComparison.OrdinalIgnoreCase))
             {
-
+                logger?.LogInformation($"[CDP] Matched gateway endpoint: {e.Response.Url}");
                 processGateWayURL(e.Response.Url);
-
             }
 
 
