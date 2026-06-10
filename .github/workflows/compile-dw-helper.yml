@@ -1,13 +1,22 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
-name: .NET
+name: Compile DW Helper
 
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'DWLibary/**'
+      - 'DualWriteHelper/**'
+      - 'DWHelperUI/**'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'DWLibary/**'
+      - 'DualWriteHelper/**'
+      - 'DWHelperUI/**'
+
 
 jobs:
   build:
